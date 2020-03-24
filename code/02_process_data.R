@@ -1,7 +1,8 @@
 
 #Calculating indicators for school aged kids and potential caregivers in long
-if(!file.exists("cache/cps_co.Rdata")){
-  special.locations <- ind_refs %>% select(-dplyr::starts_with("ind")) %>% names()
+if(!file.exists("cache/child_needs.Rdata")){
+  special.locations <- c(selector_ind %>% select(-ends_with("code")) %>% names(),
+                         selector_occ %>% select(-ends_with("code")) %>% names())
   
   cps_recoded <- 
     bind_cols(
@@ -16,7 +17,7 @@ if(!file.exists("cache/cps_co.Rdata")){
                sib=ifelse(dplyr::between(age,13,20) & !dplyr::between(empstat,1,19),1,0),
                ptw=ifelse(dplyr::between(wkstat,20,42) & age>=18,1,0)
     ),
-    map_dfc(special.locations,
+    map_dfc(special.locations,   #for intersections of industry and occupation, make this a map2_dfc and require both x==1 and y==1
             function(x){
               cps_data %>%
                 transmute(parent=as.numeric((relate %in% c(101,201,202,203,1113,1114,1116,1117)) & !!as.name(x)==1)) %>%
@@ -24,9 +25,6 @@ if(!file.exists("cache/cps_co.Rdata")){
             }) %>%
       mutate_all(~ifelse(is.na(.),0,.)))%>%
     group_by(hrhhid,hrhhid2,mish)
-  
-  
-    
   
   
   #Aggregating the indicators to the household level
@@ -98,5 +96,10 @@ if(!file.exists("cache/cps_co.Rdata")){
     ungroup()
   
   
-  save(full_long,hh_long,file="cache/cps_co.Rdata")
+  save(full_long,hh_long,file="cache/child_needs.Rdata")
 }
+
+
+#############################
+#Process data to calculate potential providers
+

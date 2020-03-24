@@ -69,6 +69,8 @@ us_cbsa <- core_based_statistical_areas(cb=T) %>%
   rename_all(str_to_lower) %>%
   st_transform(5070)
 
+# write_sf(us_cbsa[us_st,],"outputs/cbsa.shp")
+
 us_zips <- us_zipcodes() %>%
   st_transform(5070)
 
