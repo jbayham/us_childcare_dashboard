@@ -80,10 +80,7 @@ get_cps_ind_codes <- function(){
   #This function scrapes the CPS table and reads the google sheet defining occupation code subsets
   
   #Dependencies
-  require(googledrive)
   require(dplyr)
-  require(readxl)
-  require(janitor)
   require(rvest)
   ########################################
   cps.pointer <- read_html("https://cps.ipums.org/cps/codes/ind_2014_codes.shtml")
@@ -98,25 +95,60 @@ get_cps_ind_codes <- function(){
   ) %>%
     as_tibble(.name_repair = ~ c("codes", "description"))
   
+  save(ind_codes,file="cache/ind_codes.Rdata")
   
+}
+
+##########################################
+#Download google sheet and extract industry and occupation aggregations
+
+build_selector <- function(occ=T,ind=T){
+  #Args:
+    #occ: logical, TRUE if pull occupation aggregates
+    #ind: logical, TRUE if pull industry aggregates
+  
+  #Dependencies
+  require(readxl)
+  require(janitor)
+  require(googledrive)
+  ###############################################
   #Pull latest copy of the shared google sheet from 
   drive_download(file=as_id("1El3XUkgUbPRglRl3BCAl5ErDIkWJnqxtt_uXDs8QCMM"),
                  path = "inputs/reference_codes.xlsx",
                  overwrite = T)
   
-  #Read in data from ind_code
-  ind_refs <- read_excel(path = "inputs/reference_codes.xlsx",
-                         sheet = "ind_code") %>%
-    clean_names("snake") %>%
-    mutate(essential=ifelse(essential=="x",1,essential),
-           ind_code=str_pad(ind_code,4,"left","0")) 
+  if(ind){
+    #Read in data from ind_code
+    selector_ind <- read_excel(path = "inputs/reference_codes.xlsx",
+                           sheet = "ind_code") %>%
+      clean_names("snake") %>%
+      select(-description) %>%
+      mutate(ind_code=str_pad(ind_code,4,"left","0")) %>%
+      mutate_at(vars(-1),~as.numeric(ifelse(!is.na(.),1,NA))) %>%
+      rename_at(vars(-1),~str_c("ind_",.))
+    
+    save(selector_ind,file = "cache/selector_ind.Rdata")
+  }
   
+  if(occ){
+    #Read in data from ind_code
+    selector_occ <- read_excel(path = "inputs/reference_codes.xlsx",
+                           sheet = "occ_code") %>%
+      clean_names("snake") %>%
+      select(-description) %>%
+      mutate(occ_code=str_pad(occ_code,4,"left","0")) %>%
+      mutate_at(vars(-1),~as.numeric(ifelse(!is.na(.),1,NA))) %>%
+      rename_at(vars(-1),~str_c("occ_",.))
+    
+    save(selector_occ,file = "cache/selector_occ.Rdata")
+  }
   
-  save(ind_codes,ind_refs,file="cache/ind_codes.Rdata")
-  
+ 
 }
 
 
+##################################
+#This basically replicates a function in ipumsr --> move to deprecate where used in code
 get_labels <- function(df,var.name){
   df %>%
     select(!!var.name) %>%

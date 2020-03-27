@@ -1,7 +1,8 @@
 
 #Calculating indicators for school aged kids and potential caregivers in long
-if(!file.exists("cache/cps_co.Rdata")){
-  special.locations <- ind_refs %>% select(-dplyr::starts_with("ind")) %>% names()
+if(!file.exists("cache/child_needs.Rdata")){
+  special.locations <- c(selector_ind %>% select(-1) %>% names())
+                         #selector_occ %>% select(-1) %>% names())
   
   cps_recoded <- 
     bind_cols(
@@ -9,14 +10,14 @@ if(!file.exists("cache/cps_co.Rdata")){
         mutate(child_0_2=ifelse(dplyr::between(age,0,2),1,0),
                child_3_5=ifelse(dplyr::between(age,3,5),1,0),
                child_6_11=ifelse(dplyr::between(age,6,11),1,0),
-               child_12_17=ifelse(dplyr::between(age,12,17),1,0),
-               child_any=ifelse(dplyr::between(age,0,17),1,0),
+               #child_12_17=ifelse(dplyr::between(age,12,17),1,0),
+               #child_any=ifelse(dplyr::between(age,0,17),1,0),
                parents=as.numeric(relate %in% c(101,201,202,203,1113,1114,1116,1117)),
                nwa=ifelse(!(relate %in% c(301,303,901,1242,9200)) & !dplyr::between(empstat,1,19),1,0),
                sib=ifelse(dplyr::between(age,13,20) & !dplyr::between(empstat,1,19),1,0),
                ptw=ifelse(dplyr::between(wkstat,20,42) & age>=18,1,0)
     ),
-    map_dfc(special.locations,
+    map_dfc(special.locations,   #for intersections of industry and occupation, make this a map2_dfc and require both x==1 and y==1
             function(x){
               cps_data %>%
                 transmute(parent=as.numeric((relate %in% c(101,201,202,203,1113,1114,1116,1117)) & !!as.name(x)==1)) %>%
@@ -24,9 +25,6 @@ if(!file.exists("cache/cps_co.Rdata")){
             }) %>%
       mutate_all(~ifelse(is.na(.),0,.)))%>%
     group_by(hrhhid,hrhhid2,mish)
-  
-  
-    
   
   
   #Aggregating the indicators to the household level
@@ -51,7 +49,7 @@ if(!file.exists("cache/cps_co.Rdata")){
                   mutate(co = ifelse(!!as.name(x)>0,!!as.name(x),0),
                          co_nwa=ifelse(co>0 & nwa==0,!!as.name(x),0),
                          co_sib=ifelse(co_nwa>0 & sib==0,!!as.name(x),0),
-                         co_ptw=ifelse(co_sib>0 & ptw==0,!!as.name(x),0)
+                         co_sing=ifelse(co_sib>0 & parents==1,!!as.name(x),0)
                   ) %>%
                   # mutate_at(vars(dplyr::starts_with("parent")),list(total=~ifelse(.>0 & co>0,.,0),
                   #                                                   sing=~ifelse(.==1 & nwa==0 & co>0,1,0))) %>%
@@ -98,5 +96,6 @@ if(!file.exists("cache/cps_co.Rdata")){
     ungroup()
   
   
-  save(full_long,hh_long,file="cache/cps_co.Rdata")
+  save(full_long,hh_long,file="cache/child_needs.Rdata")
 }
+

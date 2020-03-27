@@ -40,7 +40,7 @@ run.script("functions")
 folder.setup()
 
 #Check if data has been downloaded
-if(!file.exists("inputs/cps_00005.dat.gz")){
+if(!file.exists("inputs/cps_00006.dat.gz")){
   stop("Please download the data from: https://drive.google.com/drive/folders/1YtuHk_iK5QBj3IM_NhdWrL4BpT3ckQBI?usp=sharing")
 
 } else {
