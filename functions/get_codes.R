@@ -123,8 +123,8 @@ build_selector <- function(occ=T,ind=T){
                            sheet = "ind_code") %>%
       clean_names("snake") %>%
       select(-description) %>%
-      mutate(essential=ifelse(essential=="x",1,essential),
-             ind_code=str_pad(ind_code,4,"left","0")) %>%
+      mutate(ind_code=str_pad(ind_code,4,"left","0")) %>%
+      mutate_at(vars(-1),~as.numeric(ifelse(!is.na(.),1,NA))) %>%
       rename_at(vars(-1),~str_c("ind_",.))
     
     save(selector_ind,file = "cache/selector_ind.Rdata")
@@ -136,8 +136,8 @@ build_selector <- function(occ=T,ind=T){
                            sheet = "occ_code") %>%
       clean_names("snake") %>%
       select(-description) %>%
-      mutate(essential=ifelse(essential=="x",1,essential),
-             occ_code=str_pad(occ_code,4,"left","0")) %>%
+      mutate(occ_code=str_pad(occ_code,4,"left","0")) %>%
+      mutate_at(vars(-1),~as.numeric(ifelse(!is.na(.),1,NA))) %>%
       rename_at(vars(-1),~str_c("occ_",.))
     
     save(selector_occ,file = "cache/selector_occ.Rdata")
