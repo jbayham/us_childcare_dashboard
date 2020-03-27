@@ -3,9 +3,8 @@
 
 #Reading new labels
 new_labels <- read_excel(path = "inputs/class_scheme_MSA.xlsx",
-                         sheet = "descriptive") %>%
-  select(1:4) %>%
-  mutate(childcare_type = str_to_title(childcare_type))
+                         sheet = "labels") %>%
+  select(1:4) 
 
 #load cached data results
 load("cache/co_by_state.Rdata")
@@ -57,6 +56,8 @@ out <- bind_rows(msa_labeled,
                  state_labeled %>% mutate(geoid=as.character(geoid)))
 
 #write to outputs
+write_csv(state_labeled %>% mutate(geoid=as.character(geoid)),path = "outputs/state_PBI.csv")
+write_csv(msa_labeled,path = "outputs/msa_PBI.csv")
 write_csv(out,path = "outputs/msa_state_PBI.csv")
 
 
@@ -64,24 +65,24 @@ write_csv(out,path = "outputs/msa_state_PBI.csv")
 ###############################
 #zip to cbsa crosswalk
 
-us_cbsa <- core_based_statistical_areas(cb=T) %>%
-  st_as_sf() %>%
-  rename_all(str_to_lower) %>%
-  st_transform(5070)
-
-# write_sf(us_cbsa[us_st,],"outputs/cbsa.shp")
-
-us_zips <- us_zipcodes() %>%
-  st_transform(5070)
-
-crosswalk_zip_cbsa <- st_intersection(us_zips %>% select(zipcode),
-                                      us_cbsa %>% select(cbsa=geoid,name))
-
-ggplot() +
-  geom_sf(data=us_cbsa[us_st,],fill="lightgray",color="red") +
-  geom_sf(data=crosswalk_zip_cbsa[us_st,],color="blue",alpha=.1) +
-  geom_sf(data=us_st,color="black",fill=NA) +
-  theme_void()
-
-write_csv(crosswalk_zip_cbsa %>% st_set_geometry(NULL),path = "outputs/crosswalk_zip_cbsa.csv")
+# us_cbsa <- core_based_statistical_areas(cb=T) %>%
+#   st_as_sf() %>%
+#   rename_all(str_to_lower) %>%
+#   st_transform(5070)
+# 
+# # write_sf(us_cbsa[us_st,],"outputs/cbsa.shp")
+# 
+# us_zips <- us_zipcodes() %>%
+#   st_transform(5070)
+# 
+# crosswalk_zip_cbsa <- st_intersection(us_zips %>% select(zipcode),
+#                                       us_cbsa %>% select(cbsa=geoid,name))
+# 
+# ggplot() +
+#   geom_sf(data=us_cbsa[us_st,],fill="lightgray",color="red") +
+#   geom_sf(data=crosswalk_zip_cbsa[us_st,],color="blue",alpha=.1) +
+#   geom_sf(data=us_st,color="black",fill=NA) +
+#   theme_void()
+# 
+# write_csv(crosswalk_zip_cbsa %>% st_set_geometry(NULL),path = "outputs/crosswalk_zip_cbsa.csv")
   
